@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>급여기준 통합 판별기</title>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header fade-in">
+      <h1 id="main-title">보건의료 급여기준 판별기</h1>
+      <p id="main-desc">원하시는 판별 항목을 선택해주세요.</p>
+    </header>
+
+    <main class="content-wrapper">
+      <div id="question-card" class="card">
+        <div class="progress-indicator">
+          <span id="step-counter">시작</span>
+        </div>
+        <h2 id="question-text" class="question-text">불러오는 중...</h2>
+        <div id="additional-info" class="additional-info"></div>
+        <div id="options-container" class="options-container">
+          <!-- Options or Date Input injected via JS -->
+        </div>
+      </div>
+
+      <div class="controls-container">
+        <button id="btn-back" class="btn-text hidden" onclick="goBack()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          이전으로
+        </button>
+        <button id="btn-reset" class="btn-text hidden" onclick="resetApp()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          처음부터 다시하기
+        </button>
+      </div>
+    </main>
+    
+    <footer class="app-footer fade-in">
+      <p>최종 결정은 의료진의 임상적 판단과 건강보험심사평가원 지침을 따르십시요.</p>
+    </footer>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
