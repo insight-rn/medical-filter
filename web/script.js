@@ -2,6 +2,7 @@ let appMode = 'bone';
 let answers = {};
 let historyStack = [];
 let currentStep = "root";
+let currentResultStatus = ""; // 결과 상태 저장을 위한 변수
 
 const logicTree = {
   // --- 최상위 분기 ---
@@ -185,7 +186,7 @@ const logicTree = {
 
 
   // ============================================
-  // 다334 골밀도검사 라우팅 (Bone Densitometry)
+  // 골밀도검사(BMD) 라우팅
   // ============================================
 
   // --- 1. 성별 ---
@@ -304,7 +305,7 @@ const logicTree = {
   },
   common_disease: {
     text: "골다공증을 유발할 수 있는 질환을 앓고 있습니까?",
-    info: "※ 주의: '이하/이상'은 해당 수치를 포함하며, '초과/미만'은 해당 수치를 포함하지 않습니다.<br>※ 예시: 갑상선 기능 항진증, 쿠싱 증후군, 성선 기능 저하증, 당뇨, 크론병, 궤양성 대장염, 위 절제술, 만성 간질환, 류마티스 관절염, 강직성 척추염, 만성 신부전 등",
+    info: "※ 예시: 갑상선 기능 항진증, 쿠싱 증후군, 성선 기능 저하증, 당뇨, 크론병, 궤양성 대장염, 위 절제술, 만성 간질환, 류마티스 관절염, 강직성 척추염, 만성 신부전 등",
     options: [
       { label: "예", action: () => "result_diag_eligible" },
       { label: "아니오", action: () => "common_drug" }
@@ -319,7 +320,7 @@ const logicTree = {
   },
   common_must: {
     text: "그 외에 의학적으로 골다공증 검사가 반드시 필요한 특별한 상태입니까?",
-    info: "※ 주의: '이하/이상'은 해당 수치를 포함하며, '초과/미만'은 해당 수치를 포함하지 않습니다.<br>※ 이 경우 청구 시 구체적인 의학적 사유 소명이 필요합니다.",
+    info: "※ 이 경우 청구 시 구체적인 의학적 사유 소명이 필요합니다.",
     options: [
       { label: "예", action: () => "result_diag_eligible" },
       { label: "아니오", action: () => "result_not_eligible" }
@@ -377,7 +378,7 @@ const logicTree = {
   },
 
   fu_tscore: {
-    text: "이전 다334 골밀도 검사의 결과(T-score) 범위를 선택해주세요.",
+    text: "이전 골밀도검사(BMD)의 결과(T-score) 범위를 선택해주세요.",
     options: [
       { label: "정상 (-1.0 이상)", action: () => { answers.tscore = 'normal'; return "fu_steroid"; } },
       { label: "골감소증 (-1.0 미만 ~ -2.5 초과)", action: () => { answers.intervalCode = 'other'; return "result_fu_calc"; } },
@@ -604,6 +605,8 @@ function renderProliaResult(title, type, terms, notice, customHtml = "") {
     finalDecision = `전액 본인 부담으로 투여해야 합니다.`;
   }
 
+  currentResultStatus = isEligible ? "급여 기준 충족 확인 완료" : "급여 기준 미달";
+
   const extraHtml = isEligible ? `
     <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 0.5rem;"><strong>급여 인정 기간:</strong> <span style="float:right;">${terms}</span></div>
     <div><strong>다음 차수 투여 예정일:</strong> <span style="float:right; color: var(--primary); font-weight: bold;">${nextDateStr}</span></div>
@@ -620,6 +623,7 @@ function renderProliaResult(title, type, terms, notice, customHtml = "") {
       <div style="margin-top: 1.5rem; font-size: 1.25rem; font-weight: bold; background-color: var(--${type}-bg); color: var(--${type}-text); padding: 1.2rem; border-radius: 0.75rem; text-align: center; word-break: keep-all;">
         ${finalDecision}
       </div>
+      ${getResultActionHtml()}
     </div>
   `;
 }
@@ -636,6 +640,8 @@ function renderSimpleResult(title, type, reason, extraHtml = "") {
     ? `<div style="font-size: 0.95rem; font-weight: normal; color: #64748b; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1;">※ 안내: 단순 건강검진 목적의 검사를 원하시는 경우 비급여 대상입니다.</div>`
     : '';
   
+  currentResultStatus = isEligible ? "급여 기준 충족 확인 완료" : "급여 불가";
+  
   return `
     <div style="opacity:0; animation: fadeIn 0.4s ease forwards;">
       <div class="result-title" style="font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--${type}); font-weight: 800;">${title}</div>
@@ -647,6 +653,7 @@ function renderSimpleResult(title, type, reason, extraHtml = "") {
       <div style="margin-top: 1.5rem; font-size: 1.25rem; font-weight: bold; background-color: var(--${type}-bg); color: var(--${type}-text); padding: 1.2rem; border-radius: 0.75rem; text-align: center;">
         ${finalDecision}
       </div>
+      ${getResultActionHtml()}
     </div>
   `;
 }
@@ -714,6 +721,8 @@ function calcFollowUpResult(ans) {
     finalDecision = `오늘(${todayStr})은 급여로 검사를 받으실 수 없습니다.`;
   }
 
+  currentResultStatus = (t >= b || t >= e) ? "급여 가능 수준(추적)" : "급여 불가(추적)";
+
   let earlyNoticeHtml = "";
   if (!isTeen && t < b && t >= e) {
     earlyNoticeHtml = `
@@ -751,6 +760,7 @@ function calcFollowUpResult(ans) {
       <div style="margin-top: 1.5rem; font-size: 1.25rem; font-weight: bold; background-color: var(--${badgeColor}-bg); color: var(--${badgeColor}-text); padding: 1.25rem; border-radius: 0.75rem; text-align: center;">
         ${finalDecision}
       </div>
+      ${getResultActionHtml()}
       ${badgeColor === 'danger' ? `<div style="font-size: 0.95rem; font-weight: normal; color: #64748b; margin-top: 0.75rem; padding: 0.75rem; border: 1px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc;">※ 안내: 단순 건강검진 목적의 검사를 원하시는 경우 비급여 대상입니다.</div>` : ''}
       ${teenWarning}
     </div>
@@ -772,7 +782,7 @@ function renderStep(stepId) {
     document.getElementById('main-title').innerText = "보건의료 급여기준 판별기";
     document.getElementById('main-desc').innerText = "원하시는 판별 항목을 선택해주세요.";
   } else if (appMode === 'bone') {
-    document.getElementById('main-title').innerText = "다334 골밀도검사 급여기준 판별기";
+    document.getElementById('main-title').innerText = "골밀도검사(BMD) 급여 판별기";
     document.getElementById('main-desc').innerText = "순서대로 질문에 답하시면 급여 적용 여부를 확인시켜 드립니다.";
   } else if (appMode === 'prolia') {
     document.getElementById('main-title').innerText = "프롤리아 프리필드시린지 급여 판별기";
@@ -827,7 +837,7 @@ function renderStep(stepId) {
         document.getElementById('btn-next-date').onclick = () => {
           const val = document.getElementById('date-input').value;
           if (!val) { alert("연월일을 정확히 입력해주세요."); return; }
-          historyStack.push({ step: currentStep, answersState: JSON.stringify(answers) });
+          historyStack.push({ step: currentStep, answersState: JSON.stringify(answers), label: val });
           renderStep(node.action(val));
         };
       } else if (node.type === "number") {
@@ -840,7 +850,7 @@ function renderStep(stepId) {
         document.getElementById('btn-next-num').onclick = () => {
           const val = document.getElementById('number-input').value;
           if (!val) { alert("숫자를 정확히 입력해주세요."); return; }
-          historyStack.push({ step: currentStep, answersState: JSON.stringify(answers) });
+          historyStack.push({ step: currentStep, answersState: JSON.stringify(answers), label: val });
           renderStep(node.action(val));
         };
       } else if (node.type === "checkboxes_steroid") {
@@ -860,7 +870,10 @@ function renderStep(stepId) {
         document.getElementById('btn-next-chk').onclick = () => {
           const is90 = document.getElementById('chk-90').checked;
           const is450 = document.getElementById('chk-450').checked;
-          historyStack.push({ step: currentStep, answersState: JSON.stringify(answers) });
+          let labelStr = [];
+          if (is90) labelStr.push("90일 초과");
+          if (is450) labelStr.push("450mg 이상");
+          historyStack.push({ step: currentStep, answersState: JSON.stringify(answers), label: labelStr.join(", ") || "해당 없음" });
           renderStep(node.action(is90, is450));
         };
       } else {
@@ -872,7 +885,7 @@ function renderStep(stepId) {
           btn.innerHTML = `<span>${opt.label}</span>
                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>`;
           btn.onclick = () => {
-            historyStack.push({ step: currentStep, answersState: JSON.stringify(answers) });
+            historyStack.push({ step: currentStep, answersState: JSON.stringify(answers), label: opt.label });
             const nextNode = opt.action();
             renderStep(nextNode);
           };
@@ -903,5 +916,126 @@ window.goBack = function() {
 window.resetApp = function() {
   historyStack = [];
   answers = {};
+  currentResultStatus = "";
   renderStep('root');
 };
+
+// --- 체크리스트 및 요약 기능 추가 ---
+
+const checklistQuestions = {
+  bone: [
+    { id: 'start', label: '성별' },
+    { id: 'age_f', label: '연령대' },
+    { id: 'age_m', label: '연령대' },
+    { id: 'purpose', label: '검사 이력' },
+    { id: 'f_preg_diag', label: '임신성 골절 의심' },
+    { id: 'f_meno', label: '폐경 여부' },
+    { id: 'f_bmi', label: '저체중 (BMI < 18.5)' },
+    { id: 'f_frac', label: '비외상성 골절력' },
+    { id: 'f_fam', label: '가족력' },
+    { id: 'f_surg', label: '외과적 폐경' },
+    { id: 'f_early', label: '조기 자연 폐경' },
+    { id: 'f_amen', label: '무월경 (1년 이상)' },
+    { id: 'common_disease', label: '골다공증 유발 질환' },
+    { id: 'common_drug', label: '골다공증 유발 약물' },
+    { id: 'common_must', label: '의학적 필수 소견' },
+    { id: 'fu_date', label: '이전 검사일' },
+    { id: 'fu_tscore', label: '이전 T-score' },
+    { id: 'teen_zscore', label: '이전 Z-score' },
+    { id: 'fu_steroid', label: '스테로이드 복용 중' },
+    { id: 'fu_pth', label: '부갑상선기능항진증' },
+    { id: 'fu_limit_chk', label: '첫 1년 내 2회 검사 여부' }
+  ],
+  prolia: [
+    { id: 'prolia_q1_purpose', label: '투여 대상 기준' },
+    { id: 'prolia_steroid_chk', label: '스테로이드 투여 조건' },
+    { id: 'prolia_q1_giop_type', label: '성별 및 연령/폐경 상태' },
+    { id: 'prolia_q2_date', label: '골밀도 검사 날짜' },
+    { id: 'prolia_q3_score_t', label: 'T-score' },
+    { id: 'prolia_q3_score_z', label: 'Z-score' },
+    { id: 'prolia_q4_has_history', label: '이전 투여 이력' },
+    { id: 'prolia_q4_date', label: '마지막 투여 날짜' },
+    { id: 'prolia_frac_1', label: '골다공증성 골절(X-ray)' },
+    { id: 'prolia_frac_2', label: '진료기록/영상판독지 기록' },
+    { id: 'prolia_q8_1', label: '과거 급여 투여 이력' },
+    { id: 'prolia_q8_2', label: '최초 투여 당시 수치' },
+    { id: 'prolia_q11', label: '호전 후 투여 횟수' }
+  ]
+};
+
+window.showChecklist = function() {
+  const container = document.getElementById('checklist-container');
+  const questions = checklistQuestions[appMode] || [];
+  
+  let html = '';
+  questions.forEach(q => {
+    const historyItem = historyStack.find(h => h.step === q.id);
+    const isChecked = !!historyItem;
+    const answerLabel = isChecked ? historyItem.label : '';
+
+    html += `
+      <div class="checklist-item ${isChecked ? 'checked' : ''}">
+        <div class="check-icon">${isChecked ? '✓' : ''}</div>
+        <div class="label-group" style="display:flex; flex-direction:column;">
+          <span class="label">${q.label}</span>
+          ${isChecked ? `<span style="font-size:0.8rem; color:var(--primary); font-weight:700;">→ ${answerLabel}</span>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  const summary = generateSummary();
+  const summaryHtml = `
+    <div class="summary-box" style="margin-top: 1rem; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 1rem; position: relative;">
+      <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem; font-weight: 700;">[의무기록용 요약]</div>
+      <div class="summary-text" id="summary-content" style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4; word-break: break-all; padding-right: 2rem;">${summary}</div>
+      <button class="btn-copy-icon" onclick="copyToClipboard(document.getElementById('summary-content').innerText)" title="복사하기" style="position: absolute; top: 0.75rem; right: 0.75rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.4rem; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      </button>
+      <div id="copy-tip" class="copy-success-tip">복사되었습니다!</div>
+    </div>
+  `;
+
+  container.innerHTML = html + summaryHtml;
+  document.getElementById('checklist-modal').classList.remove('hidden');
+};
+
+window.closeChecklist = function() {
+  document.getElementById('checklist-modal').classList.add('hidden');
+};
+
+window.generateSummary = function() {
+  // FILTER 판별 근거 형식 생성: {항목명}: {선택값} 형식
+  const questions = checklistQuestions[appMode] || [];
+  const items = [];
+  
+  questions.forEach(q => {
+    const historyItem = historyStack.find(h => h.step === q.id);
+    if (historyItem) {
+      items.push(`${q.label}: ${historyItem.label}`);
+    }
+  });
+    
+  const dateStr = new Date().toISOString().split('T')[0];
+  const summary = `${items.join(' / ')} / ${currentResultStatus} (${dateStr})`;
+  return summary;
+};
+
+window.copyToClipboard = function(text, btnId) {
+  navigator.clipboard.writeText(text).then(() => {
+    const tip = document.getElementById('copy-tip');
+    tip.classList.add('show');
+    setTimeout(() => tip.classList.remove('show'), 2000);
+  });
+};
+
+function getResultActionHtml() {
+  return `
+    <div class="result-actions">
+      <button class="btn-option primary-btn" onclick="showChecklist()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:0.5rem;"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        내가 선택한 항목 한눈에 보기
+      </button>
+    </div>
+  `;
+}

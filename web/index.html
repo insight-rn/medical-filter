@@ -43,6 +43,25 @@
       <p>최종 결정은 의료진의 임상적 판단과 건강보험심사평가원 지침을 따르십시요.</p>
     </footer>
   </div>
+
+  <!-- Checklist Modal -->
+  <div id="checklist-modal" class="modal hidden">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h3>선택 항목 확인</h3>
+        <button class="btn-close" onclick="closeChecklist()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div id="checklist-container" class="checklist-container">
+        <!-- Checklist items injected via JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-option primary-btn" onclick="closeChecklist()">확인</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
