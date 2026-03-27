@@ -10,7 +10,7 @@ const logicTree = {
     text: "다음 중 어떤 급여 기준을 확인하시겠습니까?",
     options: [
       { label: "골밀도검사(BMD)", action: () => { appMode = 'bone'; return 'start'; } },
-      { label: "프롤리아 프리필드시린지 (Denosumab 주사제)", action: () => { appMode = 'prolia'; return 'prolia_q1_purpose'; } }
+      { label: "프롤리아 프리필드시린지 (Denosumab 주사제)", disabled: true, action: () => { appMode = 'prolia'; return 'prolia_q1_purpose'; } }
     ]
   },
 
@@ -49,11 +49,11 @@ const logicTree = {
     text: "가장 최근에 실시한 중심골(요추 또는 대퇴) 골밀도 검사 날짜를 입력해 주세요.",
     action: (val) => {
       answers.proliaQ1Date = val; // 골밀도 검사 날짜 (안내용)
-      
+
       const bmdDate = new Date(val);
       const today = new Date();
       const diffDays = (today - bmdDate) / (1000 * 60 * 60 * 24);
-      
+
       if (diffDays > 365.25) {
         return "prolia_res_E_date_expired";
       }
@@ -80,10 +80,11 @@ const logicTree = {
     text: "환자가 이전에 '프롤리아 주사'를 맞은 적이 있습니까?",
     options: [
       { label: "예 (과거 투여 이력 있음)", action: () => "prolia_q4_date" },
-      { label: "아니오 (이번이 최초 투여임)", action: () => {
-          answers.proliaQ3 = null; 
+      {
+        label: "아니오 (이번이 최초 투여임)", action: () => {
+          answers.proliaQ3 = null;
           return branchByProliaType();
-        } 
+        }
       }
     ]
   },
@@ -112,7 +113,7 @@ const logicTree = {
       { label: "아니오", action: () => autoEvalNormalScores() }
     ]
   },
-  
+
   // (추적 호전 환자용 분기)
   prolia_q8_1: {
     text: "입력하신 수치가 호전 구간(-2.5 초과 ~ -2.0 이하)입니다. 이 환자가 과거에 '건강보험 급여'로 프롤리아를 맞은 적이 있나요?",
@@ -490,7 +491,7 @@ function autoEvalNormalScores() {
   }
   // -2.5초과 ~ -2.0이하
   if (score > -2.5 && score <= -2.0) {
-    return "prolia_q8_1"; 
+    return "prolia_q8_1";
   }
   // 그 외 (-2.0 초과)
   return "prolia_res_E";
@@ -528,26 +529,26 @@ function renderProliaHojeon() {
   const count = answers.proliaCount || 0;
   const currentIter = count + 1;
   const remaining = 3 - count;
-  
+
   let squares = '';
-  for(let i=1; i<=4; i++) {
+  for (let i = 1; i <= 4; i++) {
     const isPast = i < currentIter;
     const isCurr = i === currentIter;
     let bgColor = '#f1f5f9';
     let textColor = '#64748b';
     let border = 'none';
     let label = '대기중';
-    
+
     if (isPast) { bgColor = '#bfdbfe'; textColor = '#1e3a8a'; label = '참여완료'; }
     if (isCurr) { bgColor = '#3b82f6'; textColor = '#ffffff'; label = '이번차수'; border = '2px solid #1e40af'; }
-    
+
     squares += `
       <div style="flex:1; background:${bgColor}; border:${border}; border-radius:0.5rem; inset:0; padding:0.5rem 0; text-align:center; color:${textColor}; font-size:0.95rem; font-weight:700;">
         ${i}회차<br><span style="font-size:0.8rem; font-weight:normal;">${label}</span>
       </div>
     `;
   }
-  
+
   return `
     <div style="margin-top:1.5rem; padding:1.25rem; background-color:#eff6ff; border-radius:0.75rem; border:1px solid #bfdbfe;">
       <div style="font-weight:800; color:#1e40af; font-size:1.15rem; margin-bottom:0.75rem;">✅ 판정: 이번 차수 '급여' 가능 (예외 인정)</div>
@@ -568,16 +569,16 @@ function renderProliaResult(title, type, terms, notice, customHtml = "") {
   let finalDecision = "";
   let displayTitle = title;
   let nextDateStr = "-";
-  
+
   if (answers.proliaQ3 && isEligible) {
     const lastDate = new Date(answers.proliaQ3);
     const nextDate = new Date(lastDate);
     nextDate.setMonth(nextDate.getMonth() + 6);
-    
+
     const today = new Date();
     const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     const n = new Date(nextDate.getFullYear(), nextDate.getMonth(), nextDate.getDate()).getTime();
-    
+
     nextDateStr = formatD(nextDate);
 
     if (t >= n) {
@@ -587,7 +588,7 @@ function renderProliaResult(title, type, terms, notice, customHtml = "") {
       const earlyDate = new Date(nextDate);
       earlyDate.setDate(earlyDate.getDate() - 28);
       const e = new Date(earlyDate.getFullYear(), earlyDate.getMonth(), earlyDate.getDate()).getTime();
-      
+
       if (t >= e) {
         displayTitle = "급여 처방 가능합니다! (조기 투여)";
         finalDecision = `오늘(${getTodayStr()}) 급여로 주사를 처방받으실 수 있습니다.<br><span style="font-size:0.95rem; font-weight:normal; line-height: 1.5; display: inline-block; margin-top: 0.5rem;">당해 연도 기준 4주(28일) 범위 내에서 조기 투여 불가피 사유가 인정되는 구간입니다.</span>`;
@@ -632,16 +633,16 @@ function renderProliaResult(title, type, terms, notice, customHtml = "") {
 // 일반 진단(단순 결과) 렌더링 함수
 function renderSimpleResult(title, type, reason, extraHtml = "") {
   const isEligible = type === 'success' || type === 'warning';
-  const finalDecision = isEligible 
-    ? `오늘(${getTodayStr()}) 검사를 받으실 수 있습니다.` 
+  const finalDecision = isEligible
+    ? `오늘(${getTodayStr()}) 검사를 받으실 수 있습니다.`
     : `오늘(${getTodayStr()})은 검사를 받으실 수 없습니다.`;
-  
-  const guidanceHtml = type === 'danger' 
+
+  const guidanceHtml = type === 'danger'
     ? `<div style="font-size: 0.95rem; font-weight: normal; color: #64748b; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1;">※ 안내: 단순 건강검진 목적의 검사를 원하시는 경우 비급여 대상입니다.</div>`
     : '';
-  
+
   currentResultStatus = isEligible ? "급여 기준 충족 확인 완료" : "급여 불가";
-  
+
   return `
     <div style="opacity:0; animation: fadeIn 0.4s ease forwards;">
       <div class="result-title" style="font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--${type}); font-weight: 800;">${title}</div>
@@ -662,18 +663,18 @@ function renderSimpleResult(title, type, reason, extraHtml = "") {
 function calcFollowUpResult(ans) {
   const lastDate = new Date(ans.lastDate);
   const today = new Date();
-  
+
   const isWithinFirstYear = (today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24) <= 365.25;
 
   let intervalMonths = 12; // default
   let intervalText = "1년";
-  
+
   if (ans.intervalCode === 'preg') { intervalMonths = 6; intervalText = "6개월"; }
   else if (ans.intervalCode === 'other') { intervalMonths = 12; intervalText = "1년"; }
   else if (ans.intervalCode === 'teen_mid') { intervalMonths = 12; intervalText = "1년"; }
   else if (ans.intervalCode === 'teen_low') {
-      if (!ans.isFirstYearFinished) { intervalMonths = 6; intervalText = "6개월"; }
-      else { intervalMonths = 12; intervalText = "1년"; }
+    if (!ans.isFirstYearFinished) { intervalMonths = 6; intervalText = "6개월"; }
+    else { intervalMonths = 12; intervalText = "1년"; }
   }
   else if (ans.tscore) {
     if (ans.tscore === 'normal') {
@@ -687,7 +688,7 @@ function calcFollowUpResult(ans) {
 
   const baseDate = new Date(lastDate);
   baseDate.setMonth(baseDate.getMonth() + intervalMonths);
-  
+
   const earlyDate = new Date(baseDate);
   earlyDate.setDate(earlyDate.getDate() - 28);
 
@@ -779,8 +780,8 @@ function renderStep(stepId) {
   if (!node) return;
 
   if (stepId === 'root') {
-    document.getElementById('main-title').innerText = "보건의료 급여기준 판별기";
-    document.getElementById('main-desc').innerText = "원하시는 판별 항목을 선택해주세요.";
+    document.getElementById('main-title').innerText = "FILTER";
+    document.getElementById('main-desc').innerText = "30초 필터링으로 내 케이스를 확인하고, 우리 병원의 정당한 수익을 지키세요.";
   } else if (appMode === 'bone') {
     document.getElementById('main-title').innerText = "골밀도검사(BMD) 급여 판별기";
     document.getElementById('main-desc').innerText = "순서대로 질문에 답하시면 급여 적용 여부를 확인시켜 드립니다.";
@@ -802,11 +803,11 @@ function renderStep(stepId) {
 
   card.classList.remove('fade-in');
   card.classList.add('fade-out');
-  
+
   setTimeout(() => {
     currentStep = stepId;
     stepCounter.innerText = historyStack.length === 0 ? "시작 화면" : `단계 ${historyStack.length}`;
-    
+
     if (node.isResult) {
       stepCounter.innerText = "최종 결과 요약";
       questionText.innerHTML = '';
@@ -826,7 +827,7 @@ function renderStep(stepId) {
       }
 
       optionsContainer.innerHTML = '';
-      
+
       if (node.type === "date") {
         optionsContainer.innerHTML = `
           <div>
@@ -880,9 +881,21 @@ function renderStep(stepId) {
         node.options.forEach((opt, idx) => {
           const btn = document.createElement('button');
           btn.className = 'btn-option';
+          if (opt.disabled) {
+            btn.disabled = true;
+          }
           btn.style.animation = `fadeIn 0.3s ease ${idx * 0.1}s forwards`;
           btn.style.opacity = '0';
-          btn.innerHTML = `<span>${opt.label}</span>
+
+          let labelHtml = `<span>${opt.label}</span>`;
+          if (opt.disabled) {
+            labelHtml = `<div style="display:flex; flex-direction:column; align-items:center;">
+                           <div style="font-size: 0.8rem; background-color:#94a3b8; color:white; padding:0.25rem 0.6rem; border-radius:9999px; font-weight:800; margin-bottom:0.5rem; letter-spacing:0.05em; text-transform:uppercase;">Coming Soon</div>
+                           <span>${opt.label}</span>
+                         </div>`;
+          }
+
+          btn.innerHTML = `${labelHtml}
                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>`;
           btn.onclick = () => {
             historyStack.push({ step: currentStep, answersState: JSON.stringify(answers), label: opt.label });
@@ -905,7 +918,7 @@ function renderStep(stepId) {
   }, 300);
 }
 
-window.goBack = function() {
+window.goBack = function () {
   if (historyStack.length > 0) {
     const prevState = historyStack.pop();
     answers = JSON.parse(prevState.answersState);
@@ -913,7 +926,7 @@ window.goBack = function() {
   }
 };
 
-window.resetApp = function() {
+window.resetApp = function () {
   historyStack = [];
   answers = {};
   currentResultStatus = "";
@@ -963,10 +976,10 @@ const checklistQuestions = {
   ]
 };
 
-window.showChecklist = function() {
+window.showChecklist = function () {
   const container = document.getElementById('checklist-container');
   const questions = checklistQuestions[appMode] || [];
-  
+
   let html = '';
   questions.forEach(q => {
     const historyItem = historyStack.find(h => h.step === q.id);
@@ -1000,28 +1013,28 @@ window.showChecklist = function() {
   document.getElementById('checklist-modal').classList.remove('hidden');
 };
 
-window.closeChecklist = function() {
+window.closeChecklist = function () {
   document.getElementById('checklist-modal').classList.add('hidden');
 };
 
-window.generateSummary = function() {
+window.generateSummary = function () {
   // FILTER 판별 근거 형식 생성: {항목명}: {선택값} 형식
   const questions = checklistQuestions[appMode] || [];
   const items = [];
-  
+
   questions.forEach(q => {
     const historyItem = historyStack.find(h => h.step === q.id);
     if (historyItem) {
       items.push(`${q.label}: ${historyItem.label}`);
     }
   });
-    
+
   const dateStr = new Date().toISOString().split('T')[0];
   const summary = `${items.join(' / ')} / ${currentResultStatus} (${dateStr})`;
   return summary;
 };
 
-window.copyToClipboard = function(text, btnId) {
+window.copyToClipboard = function (text, btnId) {
   navigator.clipboard.writeText(text).then(() => {
     const tip = document.getElementById('copy-tip');
     tip.classList.add('show');
@@ -1037,5 +1050,66 @@ function getResultActionHtml() {
         내가 선택한 항목 한눈에 보기
       </button>
     </div>
+    <div class="email-collection-box" style="margin-top: 2rem; padding: 1.5rem; background-color: var(--primary-light); border-radius: 0.75rem; border: 1px solid #bfdbfe; text-align: center;">
+      <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-hover); margin-bottom: 0.5rem;">
+        골밀도는 시작일 뿐입니다.
+      </div>
+      <div style="font-size: 0.95rem; color: #475569; margin-bottom: 1rem; line-height: 1.5; word-break: keep-all;">
+        수익을 지켜줄 다음 도구(프롤리아, MRI, 신경차단술 등)가 출시되면 가장 먼저 알려드릴게요!
+      </div>
+      <form id="subscribe-form" class="email-form" onsubmit="submitEmailForm(event)">
+        <input type="email" id="subscriber-email" name="email" placeholder="youremail@email.com" required style="width: 100%; padding: 0.8rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; margin-bottom: 0.75rem; font-size: 0.95rem; outline: none; box-sizing: border-box;">
+        <button type="submit" id="subscribe-btn" style="width: 100%; padding: 0.8rem 1rem; background-color: var(--primary); color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background-color 0.2s;">
+          다음 도구 가장 먼저 사용하기
+        </button>
+      </form>
+    </div>
   `;
 }
+
+// Static Forms 전송 로직
+window.submitEmailForm = async function (e) {
+  e.preventDefault();
+
+  const btn = document.getElementById('subscribe-btn');
+  const emailInput = document.getElementById('subscriber-email');
+  const email = emailInput.value;
+
+  // Static Forms 연동을 위한 Access Key 입력
+  // 발급받은 키를 아래 문자열에 넣어주세요. 예: "e6xxx..."
+  const STATIC_FORMS_ACCESS_KEY = "sf_bc115256bf736f36a6c2bf3f";
+
+  btn.innerText = "등록 중...";
+  btn.style.opacity = "0.7";
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("https://api.staticforms.xyz/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accessKey: STATIC_FORMS_ACCESS_KEY,
+        email: email,
+        subject: "의료 급여기준 판별기 - 새 이메일 구독 등록"
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert("이메일이 성공적으로 등록되었습니다!");
+      emailInput.value = "";
+      btn.innerText = "등록 완료 ✓";
+      btn.style.backgroundColor = "var(--success)";
+    } else {
+      alert("등록에 실패했습니다. 다시 시도해주세요.");
+      btn.innerText = "다음 도구 가장 먼저 사용하기";
+      btn.style.opacity = "1";
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert("네트워크 오류가 발생했습니다.");
+    btn.innerText = "다음 도구 가장 먼저 사용하기";
+    btn.style.opacity = "1";
+    btn.disabled = false;
+  }
+};

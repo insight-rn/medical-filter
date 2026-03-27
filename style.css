@@ -48,16 +48,18 @@ body {
 }
 
 .app-header h1 {
-  font-size: 1.7rem;
-  font-weight: 700;
+  font-size: 2.25rem;
+  font-weight: 800;
   color: var(--text-main);
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
 }
 
 .app-header p {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  word-break: keep-all;
 }
 
 .app-footer {
@@ -512,4 +514,66 @@ body {
 
 .copy-success-tip.show {
   opacity: 1;
+}
+
+/* Disabled Button Styles */
+.btn-option:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.btn-option:disabled:hover {
+  transform: none;
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.btn-option:disabled svg {
+  color: #cbd5e1;
+}
+
+.btn-option:disabled:hover svg {
+  transform: none;
+  color: #cbd5e1;
+}
+
+/* Floating Contact Button */
+.floating-contact-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background-color: var(--primary);
+  color: white;
+  padding: 0.8rem 1.25rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.floating-contact-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background-color: var(--primary-hover);
+}
+
+.email-form button:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+@media (max-width: 480px) {
+  .floating-contact-btn {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
 }
