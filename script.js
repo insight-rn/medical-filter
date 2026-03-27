@@ -779,6 +779,7 @@ function renderStep(stepId) {
   const node = logicTree[stepId];
   if (!node) return;
 
+<<<<<<< HEAD
   const mainTitle = document.getElementById('main-title');
   const appSubtitle = document.getElementById('app-subtitle');
   const mainDesc = document.getElementById('main-desc');
@@ -797,6 +798,17 @@ function renderStep(stepId) {
     appSubtitle.classList.remove('hidden');
     appSubtitle.innerText = "프롤리아 프리필드시린지";
     mainDesc.innerText = "안내에 따라 요양급여 대상 여부와 다음 투여일을 확인하세요.";
+=======
+  if (stepId === 'root') {
+    document.getElementById('main-title').innerText = "FILTER";
+    document.getElementById('main-desc').innerText = "30초 필터링으로 내 케이스를 확인하고, 우리 병원의 정당한 수익을 지키세요.";
+  } else if (appMode === 'bone') {
+    document.getElementById('main-title').innerText = "골밀도검사(BMD) 급여 판별기";
+    document.getElementById('main-desc').innerText = "순서대로 질문에 답하시면 급여 적용 여부를 확인시켜 드립니다.";
+  } else if (appMode === 'prolia') {
+    document.getElementById('main-title').innerText = "프롤리아 프리필드시린지 급여 판별기";
+    document.getElementById('main-desc').innerText = "안내에 따라 요양급여 대상 여부와 다음 투여일을 확인하세요.";
+>>>>>>> 5b1ab0023d40b54b5587818bd8fd44527760477a
   }
 
   const card = document.getElementById('question-card');
